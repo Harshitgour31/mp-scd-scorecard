@@ -1528,21 +1528,28 @@ function parseWorkbook(wb){
   }
 
   if(detailSheet){
-    // Read twice: raw numbers for data, formatted strings for district names
+    // Read raw rows for numeric data columns
     const rawRows=XLSX.utils.sheet_to_json(detailSheet,{header:1,defval:"",raw:true});
-    const fmtRows=XLSX.utils.sheet_to_json(detailSheet,{header:1,defval:"",raw:false});
-    // Use formatted text for col B (district), raw numbers for numeric data columns
-    const rows=rawRows.map((r,i)=>{
-      const f=fmtRows[i]||[];
-      const merged=[...r];
-      if(f[1]!==undefined) merged[1]=f[1];
-      return merged;
-    });
-    console.log("Detail col B samples (raw vs fmt):",
-      rawRows.slice(4,8).map((r,i)=>({raw:r[1],fmt:(fmtRows[4+i]||[])[1]})));
-    // Log the actual SheetJS cell object for B5 to understand its type
-    const b5=detailSheet["B5"];
-    console.log("Cell B5 object:",b5);
+    const rows=rawRows;
+
+    // Helper: get the best string value for a cell address
+    // Uses SheetJS cell object directly: prefers .w (formatted text) over .v (raw value)
+    function cellText(sheet, addr){
+      const cell=sheet[addr];
+      if(!cell) return "";
+      // .w = formatted display value (what you see in Excel)
+      // .v = raw underlying value
+      // .t = type: 's'=string, 'n'=number, 'd'=date, 'b'=boolean
+      if(cell.t==="s") return String(cell.v||"").trim();
+      if(cell.w) return String(cell.w).trim();
+      return String(cell.v||"").trim();
+    }
+
+    // Log B5 cell object for debugging
+    console.log("Cell B5 object:", detailSheet["B5"]);
+    console.log("Detail col B samples:",
+      [5,6,7,8].map(r=>({addr:"B"+r, cell:detailSheet["B"+r], text:cellText(detailSheet,"B"+r)})));
+
     console.log("Detail rows:",rows.length);
     // ── Extract date labels from the heading block ──
     extractDatesFromHeadingRow(rows);
@@ -1556,8 +1563,12 @@ function parseWorkbook(wb){
       console.log("Detail header sample:",rows[hdrRow].slice(0,6));
       console.log("Detail first data row r[1] (district):",rows[hdrRow+1]?.[1],"r[2] (target_u5):",rows[hdrRow+1]?.[2],"r[14] (ll_scd_diag):",rows[hdrRow+1]?.[14]);
       for(let i=hdrRow+1;i<rows.length;i++){
-        const r=rows[i];if(!isDataRow(r[1]))continue;  // Districts at r[1] (col A is empty, col B = r[1])
-        const key=normalizeName(String(r[1]));
+        const r=rows[i];
+        // Get district name directly from cell object — handles number-formatted text cells
+        const rowNum=i+1; // SheetJS rows are 1-indexed
+        const districtName=cellText(detailSheet,"B"+rowNum)||String(r[1]||"");
+        if(!isDataRow(districtName))continue;
+        const key=normalizeName(districtName);
         if(!newData[key])newData[key]={perf:{},detail:{}};
         newData[key].detail={
           // LINE LIST Screening (col C-N = r[2]-r[13])
