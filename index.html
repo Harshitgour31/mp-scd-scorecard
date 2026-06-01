@@ -1545,10 +1545,10 @@ function parseWorkbook(wb){
       return String(cell.v||"").trim();
     }
 
-    // Log B5 cell object for debugging
-    console.log("Cell B5 object:", detailSheet["B5"]);
-    console.log("Detail col B samples:",
-      [5,6,7,8].map(r=>({addr:"B"+r, cell:detailSheet["B"+r], text:cellText(detailSheet,"B"+r)})));
+    // Log A5 cell object for debugging (Districts are in column A = index 0)
+    console.log("Cell A5 object:", detailSheet["A5"]);
+    console.log("Detail col A samples:",
+      [5,6,7,8].map(r=>({addr:"A"+r, cell:detailSheet["A"+r], text:cellText(detailSheet,"A"+r)})));
 
     console.log("Detail rows:",rows.length);
     // ── Extract date labels from the heading block ──
@@ -1561,41 +1561,41 @@ function parseWorkbook(wb){
     if(hdrRow<0) console.warn("Detail header not found. First 4 rows:",rows.slice(0,4));
     if(hdrRow>=0){
       console.log("Detail header sample:",rows[hdrRow].slice(0,6));
-      console.log("Detail first data row r[1] (district):",rows[hdrRow+1]?.[1],"r[2] (target_u5):",rows[hdrRow+1]?.[2],"r[14] (ll_scd_diag):",rows[hdrRow+1]?.[14]);
+      console.log("Detail first data row r[0] (district):",rows[hdrRow+1]?.[0],"r[1] (target_u5):",rows[hdrRow+1]?.[1],"r[13] (ll_scd_diag):",rows[hdrRow+1]?.[13]);
       for(let i=hdrRow+1;i<rows.length;i++){
         const r=rows[i];
-        // Get district name directly from cell object — handles number-formatted text cells
-        const rowNum=i+1; // SheetJS rows are 1-indexed
-        const districtName=cellText(detailSheet,"B"+rowNum)||String(r[1]||"");
+        // District name is in column A (index 0)
+        const rowNum=i+1;
+        const districtName=cellText(detailSheet,"A"+rowNum)||String(r[0]||"");
         if(!isDataRow(districtName))continue;
         const key=normalizeName(districtName);
         if(!newData[key])newData[key]={perf:{},detail:{}};
         newData[key].detail={
-          // LINE LIST Screening (col C-N = r[2]-r[13])
-          target_u5:safeNum(r[2]),actual_u5:safeNum(r[3]),pct_u5:safePctStr(r[4]),
-          target_540:safeNum(r[5]),actual_540:safeNum(r[6]),pct_540:safePctStr(r[7]),
-          target_anc:safeNum(r[8]),actual_anc:safeNum(r[9]),pct_anc:safePctStr(r[10]),
-          screenings_period:safeNum(r[11]),screenings_no_age:safeNum(r[12]),pct_no_age:safePctStr(r[13]),
-          // LINE LIST Disease LL (col O = r[14])
-          ll_scd_diagnosed:safeNum(r[14]),
-          // LINE LIST Treatment LL (col P-S = r[15]-r[18])
-          ll_scd_initiated_hu:safeNum(r[15]),ll_scd_on_treatment:safeNum(r[16]),
-          ll_pct_initiated_hu:safePctStr(r[17]),ll_pct_on_treatment:safePctStr(r[18]),
-          // AGGREGATE (col T-Z = r[19]-r[27])
-          total_screenings:safeNum(r[19]),
-          agg_scd_diagnosed:safeNum(r[20]),agg_scd_initiated_hu:safeNum(r[21]),
-          agg_scd_on_treatment:safeNum(r[22]),
-          agg_pct_initiated_hu:safePctStr(r[23]),agg_pct_on_treatment:safePctStr(r[24]),
-          genetic_cards_dist:safeNum(r[26]),pct_genetic:safePctStr(r[27]),
-          // LINE LIST Treatment unique patients (col AC-AL = r[28]-r[39])
-          hu_unique_total:safeNum(r[28]),hu_unique_u5:safeNum(r[29]),hu_unique_non_u5:safeNum(r[30]),
-          fa_unique_total:safeNum(r[31]),fa_unique_u5:safeNum(r[32]),fa_unique_non_u5:safeNum(r[33]),
-          vacc_unique_total:safeNum(r[34]),vacc_unique_u5:safeNum(r[35]),vacc_unique_non_u5:safeNum(r[36]),
-          pct_hu_all:safePctStr(r[37]),pct_fa_all:safePctStr(r[38]),pct_vacc_all:safePctStr(r[39]),
-          // Retained in care (col AO-AP = r[40]-r[41])
-          retained:safeNum(r[40]),pct_retained:safePctStr(r[41]),
-          // LINE LIST Duplicates (col AQ-AR = r[42]-r[43])
-          duplicates:safeNum(r[42]),pct_duplicates:safePctStr(r[43])
+          // LINE LIST Screening (col B-M = r[1]-r[12])
+          target_u5:safeNum(r[1]),actual_u5:safeNum(r[2]),pct_u5:safePctStr(r[3]),
+          target_540:safeNum(r[4]),actual_540:safeNum(r[5]),pct_540:safePctStr(r[6]),
+          target_anc:safeNum(r[7]),actual_anc:safeNum(r[8]),pct_anc:safePctStr(r[9]),
+          screenings_period:safeNum(r[10]),screenings_no_age:safeNum(r[11]),pct_no_age:safePctStr(r[12]),
+          // LINE LIST Disease LL (col N = r[13])
+          ll_scd_diagnosed:safeNum(r[13]),
+          // LINE LIST Treatment LL (col O-R = r[14]-r[17])
+          ll_scd_initiated_hu:safeNum(r[14]),ll_scd_on_treatment:safeNum(r[15]),
+          ll_pct_initiated_hu:safePctStr(r[16]),ll_pct_on_treatment:safePctStr(r[17]),
+          // AGGREGATE (col S-Z = r[18]-r[26])
+          total_screenings:safeNum(r[18]),
+          agg_scd_diagnosed:safeNum(r[19]),agg_scd_initiated_hu:safeNum(r[20]),
+          agg_scd_on_treatment:safeNum(r[21]),
+          agg_pct_initiated_hu:safePctStr(r[22]),agg_pct_on_treatment:safePctStr(r[23]),
+          genetic_cards_dist:safeNum(r[25]),pct_genetic:safePctStr(r[26]),
+          // LINE LIST Treatment unique patients (col AB-AK = r[27]-r[38])
+          hu_unique_total:safeNum(r[27]),hu_unique_u5:safeNum(r[28]),hu_unique_non_u5:safeNum(r[29]),
+          fa_unique_total:safeNum(r[30]),fa_unique_u5:safeNum(r[31]),fa_unique_non_u5:safeNum(r[32]),
+          vacc_unique_total:safeNum(r[33]),vacc_unique_u5:safeNum(r[34]),vacc_unique_non_u5:safeNum(r[35]),
+          pct_hu_all:safePctStr(r[36]),pct_fa_all:safePctStr(r[37]),pct_vacc_all:safePctStr(r[38]),
+          // Retained in care (col AN-AO = r[39]-r[40])
+          retained:safeNum(r[39]),pct_retained:safePctStr(r[40]),
+          // LINE LIST Duplicates (col AP-AQ = r[41]-r[42])
+          duplicates:safeNum(r[41]),pct_duplicates:safePctStr(r[42])
         };
         detailCount++;
       }
